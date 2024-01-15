@@ -73,7 +73,7 @@
           <div
             v-for="t in tickers"
             v-bind:key="t.name"
-            v-on:click="sel = t"
+            v-on:click="select(t)"
             v-bind:class="{
               'border-4': sel === t,
             }"
@@ -103,8 +103,9 @@
                   fill-rule="evenodd"
                   d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
                   clip-rule="evenodd"
-                ></path></svg
-              >Удалить
+                ></path>
+              </svg>
+              Удалить
             </button>
           </div>
 
@@ -117,10 +118,12 @@
           {{ sel.name }} - USD
         </h3>
         <div class="flex items-end border-gray-600 border-b border-l h-64">
-          <div class="bg-purple-800 border w-10 h-24"></div>
-          <div class="bg-purple-800 border w-10 h-32"></div>
-          <div class="bg-purple-800 border w-10 h-48"></div>
-          <div class="bg-purple-800 border w-10 h-16"></div>
+          <div
+            v-for="(bar, idx) in normalizeGraph()"
+            v-bind:key="idx"
+            v-bind:style="{ height: `${bar}%` }"
+            class="bg-purple-800 border w-10"
+          ></div>
         </div>
         <button
           @click="sel = null"
@@ -163,35 +166,62 @@ export default {
       ticker: "",
       tickers: [],
       sel: null,
+      graph: [],
     };
   },
   methods: {
     add() {
-      const newTicker = {
+      const currentTicker = {
         name: this.ticker,
         price: "-",
       };
 
-      this.tickers.push(newTicker);
+      this.tickers.push(currentTicker);
+
       setInterval(async () => {
         const f = await fetch(
-          `https://min-api.cryptocompare.com/data/price?fsym=${newTicker.name}&tsyms=USD&api_key=2db82c098e84d28f2144c6e608e80838876c08a6ba12e40716509610fc34d886`
+          `https://min-api.cryptocompare.com/data/price?fsym=${currentTicker.name}&tsyms=USD&api_key=2db82c098e84d28f2144c6e608e80838876c08a6ba12e40716509610fc34d886`
         );
         const data = await f.json();
-        this.tickers.find((t) => t.name === newTicker.name).price =
-          data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
-        newTicker.price = data.USD;
+
+        const matchingTicker = this.tickers.find(
+          (t) => t.name === currentTicker.name
+        );
+
+        if (matchingTicker) {
+          matchingTicker.price =
+            data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
+        }
+
+        if (this.sel?.name === currentTicker.name) {
+          this.graph.push(data.USD);
+        }
       }, 3000);
+
       this.ticker = "";
+    },
+
+    select(ticker) {
+      this.sel = ticker;
+      this.graph = [];
     },
 
     handleDelete(tickerToRemove) {
       this.tickers = this.tickers.filter((t) => t !== tickerToRemove);
+
+      if (this.sel?.name === tickerToRemove.name) {
+        this.sel = null;
+      }
+    },
+    normalizeGraph() {
+      const maxValue = Math.max(...this.graph);
+      const minValue = Math.min(...this.graph);
+      return this.graph.map(
+        (price) => 5 + ((price - minValue) * 95) / (maxValue - minValue)
+      );
     },
   },
 };
 </script>
 
 <style src="./app.css"></style>
-
-<!-- 11.43 -->
