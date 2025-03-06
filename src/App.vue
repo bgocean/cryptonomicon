@@ -180,7 +180,7 @@ export default {
 
       setInterval(async () => {
         const f = await fetch(
-          `https://min-api.cryptocompare.com/data/price?fsym=${currentTicker.name}&tsyms=USD&api_key=2db82c098e84d28f2144c6e608e80838876c08a6ba12e40716509610fc34d886`
+          `https://min-api.cryptocompare.com/data/price?fsym=${currentTicker.name}&tsyms=USD&api_key=2db82c098e_84d28f2144c6e608e808388_76c08a6ba12e40_716509610fc34d886`
         );
         const data = await f.json();
 
